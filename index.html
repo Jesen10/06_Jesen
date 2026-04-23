@@ -1,1 +1,152 @@
-restu gondrong 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>DRY Render Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; padding: 1.5rem; background: #f9f9f9; color: #111; }
+    h1 { font-size: 18px; margin-bottom: 1rem; }
+    nav { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+    nav button { padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px;
+                 background: #fff; cursor: pointer; font-size: 13px; }
+    nav button.active, nav button:hover { background: #eee; }
+    section { display: none; }
+    section.active { display: block; }
+
+    /* CARDS */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1rem; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center;
+              font-weight: 600; font-size: 14px; margin-bottom: 10px; }
+    .card .name { font-size: 14px; font-weight: 500; }
+    .card .role { font-size: 12px; color: #666; margin-top: 2px; }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px;
+             border-radius: 6px; margin-top: 8px; }
+
+    /* LIST */
+    ul.list { list-style: none; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+    ul.list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+                 border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    ul.list li:last-child { border-bottom: none; }
+    .num { width: 24px; height: 24px; border-radius: 50%; display: flex;
+           align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 8px 12px; border-bottom: 1px solid #ccc; color: #555; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+    tr:last-child td { border-bottom: none; }
+    .table-wrap { border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+  </style>
+</head>
+<body>
+
+<h1>Data Anggota Tim (DRY Render)</h1>
+<nav id="menu"></nav>
+
+<section id="sec-cards"></section>
+<section id="sec-list"></section>
+<section id="sec-table"></section>
+
+<script>
+  // ✅ SATU ARRAY DATA — tidak diulang
+  const data = [
+    { id:1, nama:"Andi Pratama",   role:"Frontend Dev", dept:"Web",    skor:88 },
+    { id:2, nama:"Budi Santoso",   role:"Backend Dev",  dept:"API",    skor:92 },
+    { id:3, nama:"Citra Dewi",     role:"UI Designer",  dept:"Design", skor:76 },
+    { id:4, nama:"Doni Kurniawan", role:"DevOps",        dept:"Infra",  skor:85 },
+    { id:5, nama:"Eka Rahayu",     role:"Data Analyst", dept:"Data",   skor:90 },
+    { id:6, nama:"Fajar Ramadan",  role:"QA Engineer",  dept:"QA",     skor:78 },
+    { id:7, nama:"Gita Permata",   role:"Scrum Master", dept:"PM",     skor:95 },
+    { id:8, nama:"Hendra Wijaya",  role:"Mobile Dev",   dept:"Mobile", skor:83 },
+    { id:9, nama:"Indah Lestari",  role:"Security",     dept:"SecOps", skor:91 },
+  ];
+
+  const colors = [
+    { bg:"#dbeafe", fg:"#1e40af" }, { bg:"#dcfce7", fg:"#166534" },
+    { bg:"#fee2e2", fg:"#991b1b" }, { bg:"#fce7f3", fg:"#9d174d" },
+    { bg:"#fef9c3", fg:"#854d0e" }, { bg:"#f0fdf4", fg:"#14532d" },
+    { bg:"#ede9fe", fg:"#5b21b6" }, { bg:"#ffedd5", fg:"#9a3412" },
+    { bg:"#f1f5f9", fg:"#334155" },
+  ];
+
+  // ✅ REUSE — fungsi bantu dipakai ulang
+  function initials(nama) {
+    return nama.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  }
+
+  // ✅ DRY — setiap render pakai loop forEach dari data yang sama
+  function renderCards() {
+    const container = document.createElement("div");
+    container.className = "card-grid";
+    data.forEach((p, i) => {
+      const c = colors[i % colors.length];
+      container.innerHTML += `
+        <div class="card">
+          <div class="avatar" style="background:${c.bg};color:${c.fg}">${initials(p.nama)}</div>
+          <div class="name">${p.nama}</div>
+          <div class="role">${p.role}</div>
+          <span class="badge" style="background:${c.bg};color:${c.fg}">${p.dept}</span>
+        </div>`;
+    });
+    document.getElementById("sec-cards").appendChild(container);
+  }
+
+  function renderList() {
+    const ul = document.createElement("ul");
+    ul.className = "list";
+    data.forEach((p, i) => {
+      const c = colors[i % colors.length];
+      ul.innerHTML += `
+        <li>
+          <span class="num" style="background:${c.bg};color:${c.fg}">${p.id}</span>
+          <span style="flex:1;font-weight:500">${p.nama}</span>
+          <span style="color:#666;font-size:12px">${p.role}</span>
+          <span class="badge" style="background:${c.bg};color:${c.fg};margin:0 0 0 8px">${p.skor}</span>
+        </li>`;
+    });
+    document.getElementById("sec-list").appendChild(ul);
+  }
+
+  function renderTable() {
+    const cols = ["#", "Nama", "Role", "Dept", "Skor"];
+    const rows = data.map(p =>
+      `<tr><td>${p.id}</td><td>${p.nama}</td><td>${p.role}</td><td>${p.dept}</td><td>${p.skor}</td></tr>`
+    ).join("");
+    document.getElementById("sec-table").innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ✅ MODULAR + SCALABLE — tab dikontrol dari array, tambah tab = tambah 1 objek saja
+  const tabs = [
+    { id: "cards", label: "Cards",  render: renderCards },
+    { id: "list",  label: "List",   render: renderList  },
+    { id: "table", label: "Table",  render: renderTable },
+  ];
+
+  const nav = document.getElementById("menu");
+  tabs.forEach((t, i) => {
+    t.render(); // render sekali
+    const btn = document.createElement("button");
+    btn.textContent = t.label;
+    if (i === 0) btn.classList.add("active");
+    btn.onclick = () => {
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("sec-" + t.id).classList.add("active");
+    };
+    nav.appendChild(btn);
+  });
+
+  document.getElementById("sec-cards").classList.add("active");
+</script>
+</body>
+</html>
