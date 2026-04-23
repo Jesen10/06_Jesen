@@ -2,151 +2,420 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>DRY Render Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tim Dashboard</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; padding: 1.5rem; background: #f9f9f9; color: #111; }
-    h1 { font-size: 18px; margin-bottom: 1rem; }
-    nav { display: flex; gap: 8px; margin-bottom: 1.5rem; }
-    nav button { padding: 6px 16px; border: 1px solid #ccc; border-radius: 8px;
-                 background: #fff; cursor: pointer; font-size: 13px; }
-    nav button.active, nav button:hover { background: #eee; }
-    section { display: none; }
-    section.active { display: block; }
+    body { font-family: sans-serif; color: #111; background: #f5f5f3; }
+
+    /* TOPBAR */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+    }
+    .topbar .logo { font-size: 15px; font-weight: 600; }
+    .topbar nav { display: flex; gap: 4px; }
+    .topbar nav a {
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      color: #666;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .12s;
+    }
+    .topbar nav a:hover, .topbar nav a.active {
+      background: #f0f0f0;
+      color: #111;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #EEEDFE;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: #534AB7;
+    }
+
+    /* LAYOUT */
+    .layout { display: flex; height: calc(100vh - 52px); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #e5e5e5;
+      padding: 16px 12px;
+      flex-shrink: 0;
+    }
+    .sidebar .section-label {
+      font-size: 11px;
+      color: #aaa;
+      padding: 12px 10px 4px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .sidebar .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+      margin-bottom: 2px;
+      transition: background .12s;
+    }
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
+      background: #f0f0f0;
+      color: #111;
+    }
+    .sidebar .menu-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* MAIN */
+    .main { flex: 1; padding: 24px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+    /* STAT ROW */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .stat .lbl { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .stat .val { font-size: 24px; font-weight: 600; }
+
+    /* SECTION HEADING */
+    .section-hd { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #888; }
 
     /* CARDS */
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1rem; }
-    .avatar { width: 40px; height: 40px; border-radius: 50%;
-              display: flex; align-items: center; justify-content: center;
-              font-weight: 600; font-size: 14px; margin-bottom: 10px; }
-    .card .name { font-size: 14px; font-weight: 500; }
-    .card .role { font-size: 12px; color: #666; margin-top: 2px; }
-    .badge { display: inline-block; font-size: 11px; padding: 2px 8px;
-             border-radius: 6px; margin-top: 8px; }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .av {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .card .nm { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .card .rl { font-size: 11px; color: #888; margin-top: 2px; }
+    .pill {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
 
     /* LIST */
-    ul.list { list-style: none; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
-    ul.list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-                 border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-    ul.list li:last-child { border-bottom: none; }
-    .num { width: 24px; height: 24px; border-radius: 50%; display: flex;
-           align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+    .list-wrap {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+      transition: background .1s;
+    }
+    .list-row:last-child { border-bottom: none; }
+    .list-row:hover { background: #fafafa; }
+    .num-dot {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600; flex-shrink: 0;
+    }
+    .score-bar {
+      flex: 1;
+      height: 5px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      margin-left: 8px;
+    }
+    .score-fill { height: 100%; border-radius: 3px; }
 
     /* TABLE */
+    .table-wrap {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      overflow: hidden;
+    }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; padding: 8px 12px; border-bottom: 1px solid #ccc; color: #555; }
-    td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
-    tr:last-child td { border-bottom: none; }
-    .table-wrap { border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+    thead th {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e5e5e5;
+      font-weight: 600;
+      font-size: 12px;
+      color: #888;
+      background: #fafafa;
+    }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid #f5f5f5; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafafa; }
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
 
-<h1>Data Anggota Tim (DRY Render)</h1>
-<nav id="menu"></nav>
+<!-- TOPBAR -->
+<div class="topbar">
+  <span class="logo">Tim Dashboard</span>
+  <nav>
+    <a class="active" onclick="showTopPage('home', this)">Beranda</a>
+    <a onclick="showTopPage('anggota', this)">Anggota</a>
+    <a onclick="showTopPage('laporan', this)">Laporan</a>
+  </nav>
+  <div class="user-avatar">Ad</div>
+</div>
 
-<section id="sec-cards"></section>
-<section id="sec-list"></section>
-<section id="sec-table"></section>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="section-label">Menu</div>
+
+    <div class="menu-item active" onclick="showPage('home'); setMenu(this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/>
+        <rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/>
+        <rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+        <rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+      </svg>
+      Overview
+    </div>
+
+    <div class="menu-item" onclick="showPage('cards'); setMenu(this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      Cards
+    </div>
+
+    <div class="menu-item" onclick="showPage('listpage'); setMenu(this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M5 4h8M5 8h8M5 12h8M2 4h.5M2 8h.5M2 12h.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      List
+    </div>
+
+    <div class="menu-item" onclick="showPage('tablepage'); setMenu(this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M1 5h14M5 5v10" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      Tabel
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- PAGE: HOME / OVERVIEW -->
+    <div class="page active" id="page-home">
+      <div class="page-title">Overview</div>
+      <div class="page-sub">Ringkasan data tim — 9 anggota aktif</div>
+      <div class="stat-row">
+        <div class="stat"><div class="lbl">Total Anggota</div><div class="val">9</div></div>
+        <div class="stat"><div class="lbl">Rata-rata Skor</div><div class="val" id="avg-skor">—</div></div>
+        <div class="stat"><div class="lbl">Departemen</div><div class="val">7</div></div>
+      </div>
+      <div class="section-hd">Anggota tim</div>
+      <div class="card-grid" id="home-cards"></div>
+    </div>
+
+    <!-- PAGE: CARDS -->
+    <div class="page" id="page-cards">
+      <div class="page-title">Cards</div>
+      <div class="page-sub">Tampilan card per anggota — render dari array</div>
+      <div class="card-grid" id="main-cards"></div>
+    </div>
+
+    <!-- PAGE: LIST -->
+    <div class="page" id="page-listpage">
+      <div class="page-title">List</div>
+      <div class="page-sub">Daftar anggota dengan skor performa</div>
+      <div class="list-wrap" id="main-list"></div>
+    </div>
+
+    <!-- PAGE: TABLE -->
+    <div class="page" id="page-tablepage">
+      <div class="page-title">Tabel</div>
+      <div class="page-sub">Data lengkap semua anggota</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Nama</th>
+              <th>Role</th>
+              <th style="width:80px">Dept</th>
+              <th style="width:60px">Skor</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: ANGGOTA (topbar) -->
+    <div class="page" id="page-anggota">
+      <div class="page-title">Anggota</div>
+      <div class="page-sub">Semua anggota tim</div>
+      <div class="card-grid" id="anggota-cards"></div>
+    </div>
+
+    <!-- PAGE: LAPORAN (topbar) -->
+    <div class="page" id="page-laporan">
+      <div class="page-title">Laporan</div>
+      <div class="page-sub">Ringkasan skor & performa tim</div>
+      <div class="list-wrap" id="laporan-list"></div>
+    </div>
+
+  </div>
+</div>
 
 <script>
-  // ✅ SATU ARRAY DATA — tidak diulang
+  // =============================================
+  // DATA — satu array, digunakan untuk semua view
+  // =============================================
   const data = [
-    { id:1, nama:"Andi Pratama",   role:"Frontend Dev", dept:"Web",    skor:88 },
-    { id:2, nama:"Budi Santoso",   role:"Backend Dev",  dept:"API",    skor:92 },
-    { id:3, nama:"Citra Dewi",     role:"UI Designer",  dept:"Design", skor:76 },
-    { id:4, nama:"Doni Kurniawan", role:"DevOps",        dept:"Infra",  skor:85 },
-    { id:5, nama:"Eka Rahayu",     role:"Data Analyst", dept:"Data",   skor:90 },
-    { id:6, nama:"Fajar Ramadan",  role:"QA Engineer",  dept:"QA",     skor:78 },
-    { id:7, nama:"Gita Permata",   role:"Scrum Master", dept:"PM",     skor:95 },
-    { id:8, nama:"Hendra Wijaya",  role:"Mobile Dev",   dept:"Mobile", skor:83 },
-    { id:9, nama:"Indah Lestari",  role:"Security",     dept:"SecOps", skor:91 },
+    { id: 1, nama: "Andi Pratama",   role: "Frontend Dev", dept: "Web",    skor: 88 },
+    { id: 2, nama: "Budi Santoso",   role: "Backend Dev",  dept: "API",    skor: 92 },
+    { id: 3, nama: "Citra Dewi",     role: "UI Designer",  dept: "Design", skor: 76 },
+    { id: 4, nama: "Doni Kurniawan", role: "DevOps",       dept: "Infra",  skor: 85 },
+    { id: 5, nama: "Eka Rahayu",     role: "Data Analyst", dept: "Data",   skor: 90 },
+    { id: 6, nama: "Fajar Ramadan",  role: "QA Engineer",  dept: "QA",     skor: 78 },
+    { id: 7, nama: "Gita Permata",   role: "Scrum Master", dept: "PM",     skor: 95 },
+    { id: 8, nama: "Hendra Wijaya",  role: "Mobile Dev",   dept: "Mobile", skor: 83 },
+    { id: 9, nama: "Indah Lestari",  role: "Security",     dept: "SecOps", skor: 91 },
   ];
 
-  const colors = [
-    { bg:"#dbeafe", fg:"#1e40af" }, { bg:"#dcfce7", fg:"#166534" },
-    { bg:"#fee2e2", fg:"#991b1b" }, { bg:"#fce7f3", fg:"#9d174d" },
-    { bg:"#fef9c3", fg:"#854d0e" }, { bg:"#f0fdf4", fg:"#14532d" },
-    { bg:"#ede9fe", fg:"#5b21b6" }, { bg:"#ffedd5", fg:"#9a3412" },
-    { bg:"#f1f5f9", fg:"#334155" },
+  // Palet warna (DRY — dipakai ulang di semua render)
+  const clr = [
+    { bg: "#E6F1FB", fg: "#185FA5", bar: "#378ADD" },
+    { bg: "#E1F5EE", fg: "#0F6E56", bar: "#1D9E75" },
+    { bg: "#FAECE7", fg: "#993C1D", bar: "#D85A30" },
+    { bg: "#FBEAF0", fg: "#993556", bar: "#D4537E" },
+    { bg: "#FAEEDA", fg: "#854F0B", bar: "#BA7517" },
+    { bg: "#EAF3DE", fg: "#3B6D11", bar: "#639922" },
+    { bg: "#EEEDFE", fg: "#534AB7", bar: "#7F77DD" },
+    { bg: "#FCEBEB", fg: "#A32D2D", bar: "#E24B4A" },
+    { bg: "#F1EFE8", fg: "#5F5E5A", bar: "#888780" },
   ];
 
-  // ✅ REUSE — fungsi bantu dipakai ulang
+  // REUSE — fungsi bantu
   function initials(nama) {
     return nama.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   }
 
-  // ✅ DRY — setiap render pakai loop forEach dari data yang sama
-  function renderCards() {
-    const container = document.createElement("div");
-    container.className = "card-grid";
-    data.forEach((p, i) => {
-      const c = colors[i % colors.length];
-      container.innerHTML += `
-        <div class="card">
-          <div class="avatar" style="background:${c.bg};color:${c.fg}">${initials(p.nama)}</div>
-          <div class="name">${p.nama}</div>
-          <div class="role">${p.role}</div>
-          <span class="badge" style="background:${c.bg};color:${c.fg}">${p.dept}</span>
-        </div>`;
-    });
-    document.getElementById("sec-cards").appendChild(container);
+  // MODULAR — setiap tampilan fungsi sendiri
+  function makeCard(p, i) {
+    const c = clr[i % clr.length];
+    return `<div class="card">
+      <div class="av" style="background:${c.bg};color:${c.fg}">${initials(p.nama)}</div>
+      <div class="nm">${p.nama}</div>
+      <div class="rl">${p.role}</div>
+      <span class="pill" style="background:${c.bg};color:${c.fg}">${p.dept}</span>
+    </div>`;
   }
 
-  function renderList() {
-    const ul = document.createElement("ul");
-    ul.className = "list";
-    data.forEach((p, i) => {
-      const c = colors[i % colors.length];
-      ul.innerHTML += `
-        <li>
-          <span class="num" style="background:${c.bg};color:${c.fg}">${p.id}</span>
-          <span style="flex:1;font-weight:500">${p.nama}</span>
-          <span style="color:#666;font-size:12px">${p.role}</span>
-          <span class="badge" style="background:${c.bg};color:${c.fg};margin:0 0 0 8px">${p.skor}</span>
-        </li>`;
-    });
-    document.getElementById("sec-list").appendChild(ul);
+  function makeListRow(p, i) {
+    const c = clr[i % clr.length];
+    return `<div class="list-row">
+      <span class="num-dot" style="background:${c.bg};color:${c.fg}">${p.id}</span>
+      <span style="width:140px;font-weight:600">${p.nama}</span>
+      <span style="flex:1;color:#888">${p.role}</span>
+      <div class="score-bar"><div class="score-fill" style="width:${p.skor}%;background:${c.bar}"></div></div>
+      <span style="font-size:13px;font-weight:600;min-width:30px;text-align:right">${p.skor}</span>
+    </div>`;
   }
 
-  function renderTable() {
-    const cols = ["#", "Nama", "Role", "Dept", "Skor"];
-    const rows = data.map(p =>
-      `<tr><td>${p.id}</td><td>${p.nama}</td><td>${p.role}</td><td>${p.dept}</td><td>${p.skor}</td></tr>`
-    ).join("");
-    document.getElementById("sec-table").innerHTML = `
-      <div class="table-wrap">
-        <table>
-          <thead><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
+  function makeTableRow(p, i) {
+    const c = clr[i % clr.length];
+    return `<tr>
+      <td style="color:#aaa">${p.id}</td>
+      <td style="font-weight:600">${p.nama}</td>
+      <td style="color:#888">${p.role}</td>
+      <td><span class="tag" style="background:${c.bg};color:${c.fg}">${p.dept}</span></td>
+      <td style="font-weight:600">${p.skor}</td>
+    </tr>`;
   }
 
-  // ✅ MODULAR + SCALABLE — tab dikontrol dari array, tambah tab = tambah 1 objek saja
-  const tabs = [
-    { id: "cards", label: "Cards",  render: renderCards },
-    { id: "list",  label: "List",   render: renderList  },
-    { id: "table", label: "Table",  render: renderTable },
-  ];
-
-  const nav = document.getElementById("menu");
-  tabs.forEach((t, i) => {
-    t.render(); // render sekali
-    const btn = document.createElement("button");
-    btn.textContent = t.label;
-    if (i === 0) btn.classList.add("active");
-    btn.onclick = () => {
-      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById("sec-" + t.id).classList.add("active");
-    };
-    nav.appendChild(btn);
+  // RENDER — semua dari satu array (DRY)
+  const ids = ["home-cards", "main-cards", "anggota-cards"];
+  ids.forEach(id => {
+    document.getElementById(id).innerHTML = data.map(makeCard).join("");
   });
 
-  document.getElementById("sec-cards").classList.add("active");
+  const listIds = ["main-list", "laporan-list"];
+  listIds.forEach(id => {
+    document.getElementById(id).innerHTML = data.map(makeListRow).join("");
+  });
+
+  document.getElementById("table-body").innerHTML = data.map(makeTableRow).join("");
+
+  // Hitung rata-rata skor
+  const avg = Math.round(data.reduce((s, p) => s + p.skor, 0) / data.length);
+  document.getElementById("avg-skor").textContent = avg;
+
+  // NAVIGASI
+  function showPage(id) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById("page-" + id).classList.add("active");
+  }
+
+  function setMenu(el) {
+    document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active"));
+    el.classList.add("active");
+  }
+
+  function showTopPage(id, btn) {
+    showPage(id);
+    document.querySelectorAll(".topbar nav a").forEach(a => a.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active"));
+  }
 </script>
 </body>
 </html>
